@@ -5,38 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        .completed{
-            text-decoration: line-through;
-        }
-        ul li button{
-            width: 70px;
-        }
-        .on{
-            display: none;
-        }
-        .todo_status button{
-            width: 100px;
-        }
-        .select_button{
-            background-color: black;
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="./sass/index.css">
 </head>
 <body>
     <div id="app">
-        <div>
-            <input type="text" placeholder="添加待辦事項" v-model="newToDo_title" @keyup.enter="addToDo" :style="input_style">
+        <div class="todo_title">
+            <input type="text" placeholder="添加待辦事項，可按enter儲存" v-model="newToDo_title" @keyup.enter="addToDo" :style="input_style">
+            <button @click="addToDo">新增</button>
         </div>
         <div class="todo_status">
             <button :class="{select_button: item_status =='all'}" @click="item_status='all'">全部</button>
             <button :class="{select_button: item_status =='ing'}" @click="item_status='ing'">進行中({{todo_remain_count}})</button>
             <button :class="{select_button: item_status =='finish'}" @click="item_status='finish'">完成({{todo_finish_count}})</button>
         </div>
-        <ul>
+        <ul class="todo_list">
             <li v-for="item in todo_select" :key="item.id">
-                <span :class="{completed: item.completed, on: item.revise}">{{item.title}}</span>
+                <p :class="{completed: item.completed, on: item.revise}">{{item.title}}</p>
                 <input type="text" value="" v-if="revise_value != null && revise_value.id == item.id" v-model="item.title" @keyup.enter="done_revise(item)" v-focus="true">
                 <button @click="todo_revise(item)" :disabled="isdisabled">{{revise_txt}}</button>
                 <button @click="todo_completed(item)">{{item.status}}</button>
@@ -48,7 +32,6 @@
             <button @click="all_todo_clear">清除全部</button>
             <button @click="completed_clear">清除已完成</button>
         </div>
-        
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
@@ -76,7 +59,7 @@
                 newToDo_title: '',
                 input_value: false,
                 input_style: {
-                    outline: '1px solid black',
+                    outline: 'none',
                     border: 'none'
                 },
                 revise_txt: '編輯',
@@ -100,8 +83,8 @@
                             status: '完成',
                         });
                         this.newToDo_title = '';
-                        this.input_style.outline = '1px solid black';
-                        this.input_style.border = '1px solid none';
+                        this.input_style.outline = 'none';
+                        this.input_style.border = 'none';
                     }
                 },
                 todo_completed(item){
