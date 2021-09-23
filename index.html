@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-hant">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .completed{
+            text-decoration: line-through;
+        }
+        ul li button{
+            width: 70px;
+        }
+        .on{
+            display: none;
+        }
+        .todo_status button{
+            width: 100px;
+        }
+        .select_button{
+            background-color: black;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div>
+            <input type="text" placeholder="添加待辦事項" v-model="newToDo_title" @keyup.enter="addToDo" :style="input_style">
+        </div>
+        <div class="todo_status">
+            <button :class="{select_button: item_status =='all'}" @click="item_status='all'">全部</button>
+            <button :class="{select_button: item_status =='ing'}" @click="item_status='ing'">進行中({{todo_remain_count}})</button>
+            <button :class="{select_button: item_status =='finish'}" @click="item_status='finish'">完成({{todo_finish_count}})</button>
+        </div>
+        <ul>
+            <li v-for="item in todo_select" :key="item.id">
+                <span :class="{completed: item.completed, on: item.revise}">{{item.title}}</span>
+                <input type="text" value="" v-if="revise_value != null && revise_value.id == item.id" v-model="item.title" @keyup.enter="done_revise(item)" v-focus="true">
+                <button @click="todo_revise(item)" :disabled="isdisabled">{{revise_txt}}</button>
+                <button @click="todo_completed(item)">{{item.status}}</button>
+                <button @click="todo_delete(item)">刪除</button>
+            </li>
+        </ul>
+        <div class="all_control">
+            <button @click="all_completed">全部皆已完成</button>
+            <button @click="all_todo_clear">清除全部</button>
+            <button @click="completed_clear">清除已完成</button>
+        </div>
+        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        Vue.config.devtools = true;
+        let id = 0;
+        let storage_key = 'todo_archive';
+        let todo_storage = {
+            fetch(){
+                let todos = JSON.parse(localStorage.getItem(storage_key) || '[]');
+                todos.forEach((item, index) => {
+                    item.id = index;
+                });
+                todo_storage.uid = todos.length;
+                return todos;
+            },
+            save(todos){
+                localStorage.setItem(storage_key, JSON.stringify(todos));
+            }
+        };
+        let app = new Vue({
+            el: '#app',
+            data: {
+                todos: todo_storage.fetch(),
+                newToDo_title: '',
+                input_value: false,
+                input_style: {
+                    outline: '1px solid black',
+                    border: 'none'
+                },
+                revise_txt: '編輯',
+                revise_value: null,
+                isdisabled: false,
+                item_status: 'all',
+            },
+            methods: {
+                addToDo(){
+                    if(!this.newToDo_title){
+                        this.input_value = true;
+                        this.input_style.outline = '1px solid red';
+                        this.input_style.border = 'none';
+                        alert('不可為空白');
+                    }else{
+                        this.todos.push({
+                            id: todo_storage.uid++,
+                            title: this.newToDo_title,
+                            completed: false,
+                            revise: false,
+                            status: '完成',
+                        });
+                        this.newToDo_title = '';
+                        this.input_style.outline = '1px solid black';
+                        this.input_style.border = '1px solid none';
+                    }
+                },
+                todo_completed(item){
+                    if(item.completed == false){
+                        item.completed = true;
+                        item.status = '未完成';
+                        // console.log(item.completed)
+                    }else{
+                        item.completed = false;
+                        item.status = '完成';
+                    }
+                },
+                todo_delete(item){
+                    // console.log(this.todos.indexOf(item))
+                    if(confirm('確認要刪除嗎？')){
+                        this.todos.splice(this.todos.indexOf(item),1);
+                    }
+                },
+                todo_revise(item){
+                    this.revise_value = {id: item.id, title: item.title, completed: item.completed, revise: item.revise};
+                    item.revise = true;
+                    this.isdisabled = true;
+                },
+                done_revise(item){
+                    if(item.title.length === 0){
+                        if(confirm("確定要刪除嗎？")){
+                            this.todos.splice(this.todos.indexOf(item),1);
+                            this.isdisabled = false;
+                        }
+                    }else{
+                        this.revise_value = null;
+                        item.revise = false;
+                        this.isdisabled = false;
+                    }
+                },
+                all_completed(){
+                    if(confirm("確定全部都完成了嗎？")){
+                        this.todos.map(item => {
+                            if(!item.completed){
+                                item.completed = true;
+                                item.status = '未完成';
+                            }
+                        })
+                    }
+                },
+                all_todo_clear(){
+                    this.todos = [];
+                },
+                completed_clear(){
+                    this.todos = this.todos.filter(item => !item.completed)
+                }
+            },
+            computed: {
+                todo_remain(){
+                    return this.todos.filter(item => !item.completed)
+                },
+                todo_remain_count(){
+                    return this.todo_remain.length
+                },
+                todo_finish(){
+                    return this.todos.filter(item => item.completed)
+                },
+                todo_finish_count(){
+                    return this.todo_finish.length
+                },
+                todo_select(){
+                    if(this.item_status == 'ing'){
+                        return this.todo_remain
+                    }else if(this.item_status == 'finish'){
+                        return this.todo_finish
+                    }else{
+                        return this.todos
+                    }
+                }
+            },
+            watch: {
+                // 監聽todos的變化，若是儲存在localstorage的資料發生變化則會修改
+                todos: {
+                    handler(todos){
+                        todo_storage.save(todos);
+                    },
+                    deep: true
+                }
+            },
+            // 自定義屬性
+            directives: {
+                focus: {
+                    inserted: el => {
+                        el.focus()
+                    }
+                }
+            },
+        })
+    </script>
+</body>
+</html>
