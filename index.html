@@ -37,25 +37,30 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <script>
         Vue.config.devtools = true;
-        let id = 0;
         let storage_key = 'todo_archive';
         let todo_storage = {
-            fetch(){
+            // 獲取localstorage的內容
+            get(){
                 let todos = JSON.parse(localStorage.getItem(storage_key) || '[]');
+                // console.log(todos)
                 todos.forEach((item, index) => {
                     item.id = index;
                 });
                 todo_storage.uid = todos.length;
+                // console.log(todo_storage.uid)
                 return todos;
             },
+            // 將資料存入localstorage內
             save(todos){
                 localStorage.setItem(storage_key, JSON.stringify(todos));
+                // console.log(JSON.stringify(todos))
             }
         };
-        let app = new Vue({
+        let vm = new Vue({
             el: '#app',
             data: {
-                todos: todo_storage.fetch(),
+                // 將localstorage內的資料秀到畫面上
+                todos: todo_storage.get(),
                 newToDo_title: '',
                 input_value: false,
                 input_style: {
@@ -68,6 +73,7 @@
                 item_status: 'all',
             },
             methods: {
+                // 新增待辦事項
                 addToDo(){
                     if(!this.newToDo_title){
                         this.input_value = true;
@@ -87,6 +93,7 @@
                         this.input_style.border = 'none';
                     }
                 },
+                // 待辦事項完成&未完成
                 todo_completed(item){
                     if(item.completed == false){
                         item.completed = true;
@@ -97,17 +104,20 @@
                         item.status = '完成';
                     }
                 },
+                // 刪除待辦事項
                 todo_delete(item){
                     // console.log(this.todos.indexOf(item))
                     if(confirm('確認要刪除嗎？')){
                         this.todos.splice(this.todos.indexOf(item),1);
                     }
                 },
+                // 點選編輯
                 todo_revise(item){
                     this.revise_value = {id: item.id, title: item.title, completed: item.completed, revise: item.revise};
                     item.revise = true;
                     this.isdisabled = true;
                 },
+                // 輸入待辦事項
                 done_revise(item){
                     if(item.title.length === 0){
                         if(confirm("確定要刪除嗎？")){
@@ -120,6 +130,7 @@
                         this.isdisabled = false;
                     }
                 },
+                // 待辦事項全部完成
                 all_completed(){
                     if(confirm("確定全部都完成了嗎？")){
                         this.todos.map(item => {
@@ -130,26 +141,33 @@
                         })
                     }
                 },
+                // 刪除全部待辦事項
                 all_todo_clear(){
                     this.todos = [];
                 },
+                // 所有待辦事項完成
                 completed_clear(){
                     this.todos = this.todos.filter(item => !item.completed)
                 }
             },
             computed: {
+                // 待辦事項進行中
                 todo_remain(){
                     return this.todos.filter(item => !item.completed)
                 },
+                // 待辦事項數量
                 todo_remain_count(){
                     return this.todo_remain.length
                 },
+                // 完成待辦事項
                 todo_finish(){
                     return this.todos.filter(item => item.completed)
                 },
+                // 完成數量
                 todo_finish_count(){
                     return this.todo_finish.length
                 },
+                // 篩選按鈕
                 todo_select(){
                     if(this.item_status == 'ing'){
                         return this.todo_remain
@@ -161,7 +179,7 @@
                 }
             },
             watch: {
-                // 監聽todos的變化，若是儲存在localstorage的資料發生變化則會修改
+                // 監聽todos的變化
                 todos: {
                     handler(todos){
                         todo_storage.save(todos);
@@ -169,7 +187,7 @@
                     deep: true
                 }
             },
-            // 自定義屬性
+            // 自定義屬性，點選編輯後自動focus
             directives: {
                 focus: {
                     inserted: el => {

@@ -87,7 +87,7 @@ body {
 
 .todo_list li p {
   display: inline-block;
-  width: 400px;
+  width: 430px;
 }
 
 .todo_list li p.completed {
